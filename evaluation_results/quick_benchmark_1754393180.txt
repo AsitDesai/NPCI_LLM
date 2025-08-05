@@ -1,0 +1,73 @@
+================================================================================
+FINANCIAL LLM EVALUATION REPORT
+================================================================================
+
+OVERALL PERFORMANCE
+----------------------------------------
+Total Tests: 5
+Average Accuracy: 1.000
+Average Relevance: 0.304
+Average Completeness: 1.000
+Average Response Time: 0.000s
+Accuracy Range: 1.000 - 1.000
+Accuracy Std Dev: 0.000
+
+PERFORMANCE BY CATEGORY
+----------------------------------------
+Compliance:
+  Count: 2
+  Accuracy: 1.000
+  Relevance: 0.393
+  Completeness: 1.000
+
+Payment Processing:
+  Count: 2
+  Accuracy: 1.000
+  Relevance: 0.200
+  Completeness: 1.000
+
+Customer Service:
+  Count: 1
+  Accuracy: 1.000
+  Relevance: 0.333
+  Completeness: 1.000
+
+PERFORMANCE BY DOMAIN
+----------------------------------------
+compliance:
+  Count: 2
+  Accuracy: 1.000
+  Relevance: 0.393
+  Completeness: 1.000
+
+payment:
+  Count: 2
+  Accuracy: 1.000
+  Relevance: 0.200
+  Completeness: 1.000
+
+customer_service:
+  Count: 1
+  Accuracy: 1.000
+  Relevance: 0.333
+  Completeness: 1.000
+
+PERFORMANCE BY DIFFICULTY
+----------------------------------------
+hard:
+  Count: 1
+  Accuracy: 1.000
+  Relevance: 0.500
+  Completeness: 1.000
+
+easy:
+  Count: 3
+  Accuracy: 1.000
+  Relevance: 0.244
+  Completeness: 1.000
+
+medium:
+  Count: 1
+  Accuracy: 1.000
+  Relevance: 0.286
+  Completeness: 1.000
