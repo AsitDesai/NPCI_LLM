@@ -81,6 +81,20 @@ def main():
             "What is the refund policy?"
         ]
         
+        # Allow custom query input
+        print("\n" + "="*60)
+        print("🎯 CUSTOM QUERY INPUT")
+        print("="*60)
+        print("You can enter your own query to test the retrieval system.")
+        print("Press Enter without typing anything to skip custom query.")
+        
+        custom_query = input("\nEnter your custom query: ").strip()
+        if custom_query:
+            test_queries.append(custom_query)
+            print(f"✅ Added custom query: '{custom_query}'")
+        else:
+            print("⏭️ Skipping custom query input")
+        
         all_results = []
         
         for i, query in enumerate(test_queries, 1):
@@ -213,6 +227,63 @@ def main():
         print(f"     Reranking: {rerank_time:.3f}s")
         print(f"     Context building: {build_time:.3f}s")
         print(f"     Final context: {context_info.total_tokens} tokens, {context_info.num_chunks} chunks")
+        
+        # ========================================
+        # STEP 6: CUSTOM QUERY INTERACTIVE TEST
+        # ========================================
+        print("\n" + "="*60)
+        print("🎯 STEP 6: INTERACTIVE CUSTOM QUERY TEST")
+        print("="*60)
+        print("Test the system with your own queries interactively.")
+        print("Type 'quit' or 'exit' to stop, or press Enter to skip.")
+        
+        while True:
+            interactive_query = input("\nEnter a query to test (or 'quit' to exit): ").strip()
+            
+            if not interactive_query:
+                print("⏭️ Skipping interactive testing")
+                break
+                
+            if interactive_query.lower() in ['quit', 'exit', 'q']:
+                print("👋 Exiting interactive testing")
+                break
+            
+            print(f"🔍 Testing query: '{interactive_query}'")
+            
+            # Perform complete pipeline
+            start_time = time.time()
+            
+            # Step 1: Retrieve
+            results = retriever.retrieve(interactive_query, top_k=5)
+            retrieval_time = time.time() - start_time
+            
+            if not results:
+                print("   ❌ No results found for this query")
+                continue
+            
+            # Step 2: Rerank
+            reranked_results = reranker.rerank(results, interactive_query)
+            rerank_time = time.time() - start_time - retrieval_time
+            
+            # Step 3: Build context
+            context_info = context_builder.build_context(reranked_results, interactive_query)
+            build_time = time.time() - start_time - retrieval_time - rerank_time
+            
+            total_time = time.time() - start_time
+            
+            # Display results
+            print(f"   ✅ Retrieved {len(results)} results in {total_time:.3f}s")
+            print(f"   📊 Top result score: {results[0].score:.3f}")
+            print(f"   📄 Context built: {context_info.total_tokens} tokens, {context_info.num_chunks} chunks")
+            
+            # Show top result
+            top_result = results[0]
+            print(f"   🏆 Top result: {top_result.text[:150]}...")
+            
+            # Show context preview
+            if context_info.context:
+                context_preview = context_info.context[:300] + "..." if len(context_info.context) > 300 else context_info.context
+                print(f"   📝 Context preview: {context_preview}")
         
         # ========================================
         # FINAL SUMMARY
