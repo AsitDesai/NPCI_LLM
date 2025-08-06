@@ -295,21 +295,21 @@ class LlamaIndexEmbeddingBuilder:
             Dictionary with validation results
         """
         try:
-            # Test query to validate embeddings
+            # Test query to validate embeddings without using LLM
             test_query = "test query for validation"
             
-            # Create query engine
-            query_engine = index.as_query_engine()
+            # Create retriever instead of query engine to avoid LLM dependency
+            retriever = index.as_retriever(similarity_top_k=3)
             
             # Test retrieval
-            response = query_engine.query(test_query)
+            retrieved_nodes = retriever.retrieve(test_query)
             
             validation_results = {
                 "index_valid": True,
-                "query_engine_created": True,
+                "retriever_created": True,
                 "test_query_successful": True,
-                "response_length": len(str(response)),
-                "sources_retrieved": len(response.source_nodes) if hasattr(response, 'source_nodes') else 0
+                "nodes_retrieved": len(retrieved_nodes),
+                "has_embeddings": all(hasattr(node, 'embedding') and node.embedding is not None for node in retrieved_nodes) if retrieved_nodes else False
             }
             
             logger.info("Embedding validation successful")
