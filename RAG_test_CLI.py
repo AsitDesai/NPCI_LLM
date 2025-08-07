@@ -1,8 +1,7 @@
 """
-RAG System CLI Test
+RAG System CLI
 
-This script provides an interactive CLI to test the complete RAG pipeline,
-integrating retrieval and generation systems.
+Simple CLI for testing the RAG pipeline.
 """
 
 import sys
@@ -19,48 +18,41 @@ from generation.post_processor import PostProcessor
 from retrieval.retriever import SemanticRetriever
 from retrieval.context_builder import ContextBuilder
 from embeddings.embedder import LlamaIndexEmbedder
-from embeddings.models import get_default_embedding_config
 from embeddings.vector_store import QdrantVectorStore
 
 
 class RAGCLI:
-    """
-    Interactive CLI for testing the complete RAG pipeline.
-    """
+    """Simple RAG CLI for testing."""
     
     def __init__(self):
-        """Initialize the RAG CLI."""
+        """Initialize the RAG system."""
         print("🚀 Initializing RAG System...")
         
         try:
             # Initialize components
-            self.embedder = LlamaIndexEmbedder(get_default_embedding_config())
+            self.embedder = LlamaIndexEmbedder()
             self.vector_store = QdrantVectorStore()
             self.retriever = SemanticRetriever(self.embedder, self.vector_store)
             self.context_builder = ContextBuilder()
-            
             self.prompt_templates = PromptTemplates()
             
-            # Try to use real generator, fallback to mock
+            # Initialize generator
             try:
                 self.generator = ResponseGenerator()
                 print("✅ Real Mistral generator initialized")
             except Exception as e:
-                print(f"⚠️ Real Mistral generator failed: {e}")
-                print("🔄 Using mock generator for testing")
-                from generation.generator import MockResponseGenerator
+                print(f"⚠️ Using mock generator: {e}")
                 self.generator = MockResponseGenerator()
             
             self.post_processor = PostProcessor()
-            
-            print("✅ RAG System initialized successfully!")
+            print("✅ RAG System ready!")
             
         except Exception as e:
-            print(f"❌ Failed to initialize RAG System: {e}")
+            print(f"❌ Failed to initialize: {e}")
             raise
     
     def retrieve_context(self, query: str) -> str:
-        """Retrieve context for the query."""
+        """Retrieve context using semantic retrieval."""
         print(f"\n🔍 Retrieving context for: '{query}'")
         
         try:
@@ -69,148 +61,113 @@ class RAGCLI:
             retrieval_time = time.time() - start_time
             
             if not results:
-                print("⚠️ No retrieval results found, using fallback context")
+                print("⚠️ No results found")
                 return "Based on available information, I'll provide a general response."
             
-            # Convert LlamaIndex Document objects to RetrievalResult objects
-            from retrieval.retriever import RetrievalResult
-            
-            retrieval_results = []
-            for i, doc in enumerate(results):
-                # Extract text from LlamaIndex Document
-                text = self._extract_text_from_llama_document(doc)
-                
-                # Create RetrievalResult object
-                retrieval_result = RetrievalResult(
-                    text=text,
-                    score=0.8,  # Default score since LlamaIndex doesn't provide scores
-                    metadata=doc.metadata if hasattr(doc, 'metadata') else {},
-                    source_document=doc.metadata.get('file_name', 'unknown') if hasattr(doc, 'metadata') else 'unknown',
-                    chunk_index=doc.metadata.get('chunk_index', i) if hasattr(doc, 'metadata') else i
-                )
-                retrieval_results.append(retrieval_result)
-            
             # Build context
-            context_info = self.context_builder.build_context(retrieval_results, query)
+            context_info = self.context_builder.build_context(results, query)
             context = context_info.context
-            context_time = time.time() - start_time - retrieval_time
             
             print(f"✅ Retrieved {len(results)} results in {retrieval_time:.3f}s")
-            print(f"✅ Built context in {context_time:.3f}s")
             print(f"📏 Context length: {len(context)} characters")
             
             return context
             
         except Exception as e:
-            print(f"❌ Error retrieving context: {e}")
-            return "Error retrieving context. Using fallback."
-    
-    def _extract_text_from_llama_document(self, doc) -> str:
-        """Extract text from LlamaIndex Document object."""
-        # Try direct text attribute first
-        if hasattr(doc, 'text') and doc.text:
-            return doc.text
-        
-        # Try to extract from metadata if text is not directly available
-        if hasattr(doc, 'metadata') and doc.metadata:
-            # Check if text is in metadata
-            if 'text' in doc.metadata:
-                return doc.metadata['text']
-            
-            # Check if text is in _node_content (common in LlamaIndex)
-            if '_node_content' in doc.metadata:
-                import json
-                try:
-                    node_content = json.loads(doc.metadata['_node_content'])
-                    if 'text' in node_content:
-                        return node_content['text']
-                except:
-                    pass
-        
-        # Fallback to string representation
-        return str(doc)
+            print(f"❌ Error in retrieval: {e}")
+            return "Based on available information, I'll provide a general response."
     
     def build_prompt(self, query: str, context: str, style: str = "concise") -> str:
-        """Build a prompt for generation."""
-        print(f"\n📝 Building prompt with {style} style...")
-        
+        """Build prompt."""
         try:
+            if style == "concise":
+                prompt_style = PromptStyle.CONCISE
+            elif style == "detailed":
+                prompt_style = PromptStyle.DETAILED
+            elif style == "technical":
+                prompt_style = PromptStyle.TECHNICAL
+            else:
+                prompt_style = PromptStyle.CONCISE
+            
             prompt = self.prompt_templates.format_prompt(
                 query=query,
                 context=context,
-                style=PromptStyle(style)
+                style=prompt_style
             )
             
-            print(f"✅ Prompt built ({len(prompt)} characters)")
+            print(f"✅ Built {style} prompt ({len(prompt)} characters)")
             return prompt
             
         except Exception as e:
             print(f"❌ Error building prompt: {e}")
-            raise
+            return f"Query: {query}\nContext: {context}\nPlease provide a helpful response."
     
-    def generate_response(self, prompt: str, style: str = "concise") -> str:
-        """Generate a response using the LLM."""
-        print(f"\n🤖 Generating response with {style} style...")
-        
+    def generate_response(self, prompt: str) -> str:
+        """Generate response."""
         try:
             start_time = time.time()
-            response = self.generator.generate(prompt, style=style)
+            response = self.generator.generate(prompt)
             generation_time = time.time() - start_time
             
-            print(f"✅ Response generated in {generation_time:.3f}s")
-            print(f"📏 Response length: {len(response)} characters")
-            
+            print(f"✅ Generated response in {generation_time:.3f}s")
             return response
             
         except Exception as e:
             print(f"❌ Error generating response: {e}")
-            return f"Error generating response: {str(e)}"
+            return "I apologize, but I encountered an error while generating the response."
     
     def process_response(self, response: str) -> dict:
-        """Process and enhance the response."""
-        print(f"\n🔧 Processing response...")
-        
+        """Process response."""
         try:
             processed = self.post_processor.process(response)
-            
-            print(f"✅ Response processed")
-            print(f"📊 Confidence: {processed['confidence']:.2f}")
-            print(f"🎭 Tone: {processed['metadata']['tone']}")
-            print(f"📝 Word count: {processed['metadata']['word_count']}")
-            
+            print("✅ Response processed")
             return processed
             
         except Exception as e:
             print(f"❌ Error processing response: {e}")
-            return {"response": response, "confidence": 0.0}
+            return {
+                "original_response": response,
+                "processed_response": response,
+                "confidence": 0.5
+            }
     
     def display_response(self, processed_response: dict):
-        """Display the final response."""
+        """Display response."""
         print(f"\n{'='*60}")
-        print("🎯 FINAL RESPONSE")
+        print("🎯 RAG RESPONSE")
         print(f"{'='*60}")
         
-        display = self.post_processor.format_for_display(processed_response)
-        print(display)
+        if isinstance(processed_response, dict):
+            # Handle different possible response keys
+            response = (processed_response.get('processed_response') or 
+                       processed_response.get('response') or 
+                       processed_response.get('original_response') or 
+                       'No response')
+            confidence = processed_response.get('confidence', 0.5)
+            
+            print(f"📝 Response: {response}")
+            print(f"🎯 Confidence: {confidence:.2f}")
+        else:
+            print(f"📝 Response: {processed_response}")
         
-        print(f"\n{'='*60}")
+        print(f"{'='*60}")
     
     def run_query(self, query: str, style: str = "concise"):
         """Run a complete RAG query."""
         print(f"\n{'='*60}")
-        print(f"🔍 PROCESSING QUERY: '{query}'")
+        print(f"🔍 RAG QUERY: '{query}'")
         print(f"🎨 STYLE: {style}")
         print(f"{'='*60}")
         
         try:
-            # Step 1: Retrieve context
+            # Step 1: Context retrieval
             context = self.retrieve_context(query)
             
             # Step 2: Build prompt
             prompt = self.build_prompt(query, context, style)
             
             # Step 3: Generate response
-            response = self.generate_response(prompt, style)
+            response = self.generate_response(prompt)
             
             # Step 4: Process response
             processed = self.process_response(response)
@@ -225,79 +182,56 @@ class RAGCLI:
             return None
     
     def interactive_mode(self):
-        """Run interactive mode for testing."""
-        print(f"\n{'='*60}")
-        print("🎮 INTERACTIVE RAG TESTING")
-        print(f"{'='*60}")
-        print("Type 'quit' or 'exit' to stop")
-        print("Type 'help' for available commands")
-        print(f"{'='*60}")
+        """Run interactive mode."""
+        print("\n🎮 RAG INTERACTIVE MODE")
+        print("="*60)
+        print("Type 'quit' to exit")
+        print("="*60)
         
         while True:
             try:
-                query = input("\n🔍 Enter your query: ").strip()
+                query = input("\n🤖 Query: ").strip()
                 
                 if query.lower() in ['quit', 'exit', 'q']:
                     print("👋 Goodbye!")
                     break
                 
-                if query.lower() == 'help':
-                    self.show_help()
-                    continue
-                
                 if not query:
-                    print("⚠️ Please enter a query")
                     continue
                 
-                # Get style preference
-                style = input("🎨 Enter style (concise/detailed/technical/friendly/professional) [concise]: ").strip()
-                if not style:
-                    style = "concise"
-                
-                # Run the query
-                self.run_query(query, style)
-                
+                # Run query
+                self.run_query(query)
+                    
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
                 break
             except Exception as e:
                 print(f"❌ Error: {e}")
-    
-    def show_help(self):
-        """Show help information."""
-        print(f"\n{'='*60}")
-        print("📖 HELP - RAG SYSTEM COMMANDS")
-        print(f"{'='*60}")
-        print("Commands:")
-        print("  quit/exit/q - Exit the program")
-        print("  help - Show this help message")
-        print("\nStyles:")
-        print("  concise - Brief, direct answers")
-        print("  detailed - Comprehensive explanations")
-        print("  technical - Technical, precise responses")
-        print("  friendly - Warm, approachable tone")
-        print("  professional - Formal, structured responses")
-        print(f"{'='*60}")
 
 
 def main():
-    """Main function to run the RAG CLI."""
-    print("🚀 RAG SYSTEM CLI TEST")
-    print("=" * 60)
+    """Run the RAG CLI."""
+    print("🚀 RAG SYSTEM CLI")
+    print("="*60)
     
     try:
-        # Initialize RAG system
+        # Initialize RAG CLI
         rag_cli = RAGCLI()
         
-        # Run interactive mode
-        rag_cli.interactive_mode()
-        
+        # Check if command line arguments provided
+        if len(sys.argv) > 1:
+            query = " ".join(sys.argv[1:])
+            rag_cli.run_query(query)
+        else:
+            # Run interactive mode
+            rag_cli.interactive_mode()
+            
     except Exception as e:
         print(f"❌ Failed to start RAG CLI: {e}")
-        return 1
+        return False
     
-    return 0
+    return True
 
 
 if __name__ == "__main__":
-    exit(main()) 
+    main() 

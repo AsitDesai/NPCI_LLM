@@ -14,6 +14,7 @@ from llama_index.core.schema import TextNode
 
 from config.settings import settings
 from config.logging import get_logger
+from .semantic_chunker import SemanticChunker
 
 logger = get_logger(__name__)
 
@@ -47,6 +48,8 @@ class DocumentChunker:
         """
         self.chunk_size = chunk_size or settings.chunk_size
         self.chunk_overlap = chunk_overlap or settings.chunk_overlap
+        self.min_chunk_size = 50  # Minimum chunk size for semantic chunking
+        self.max_chunk_size = 1000  # Maximum chunk size for semantic chunking
         
         # Initialize LlamaIndex text splitters
         self.sentence_splitter = SentenceSplitter(
@@ -63,13 +66,13 @@ class DocumentChunker:
         
         logger.info(f"Document chunker initialized with chunk_size={self.chunk_size}, overlap={self.chunk_overlap}")
     
-    def chunk_document(self, document: Document, method: str = "sentence") -> List[TextNode]:
+    def chunk_document(self, document: Document, method: str = "semantic") -> List[TextNode]:
         """
         Chunk a single document into smaller pieces.
         
         Args:
             document: LlamaIndex Document object
-            method: Chunking method ("sentence" or "token")
+            method: Chunking method ("semantic", "sentence", or "token")
             
         Returns:
             List of TextNode objects representing chunks
@@ -79,8 +82,32 @@ class DocumentChunker:
             return []
         
         try:
-            # Choose chunking method
-            if method == "sentence":
+            # Use semantic chunking as primary method
+            if method == "semantic":
+                semantic_chunker = SemanticChunker(
+                    sentence_overlap=1,
+                    min_chunk_size=self.min_chunk_size,
+                    max_chunk_size=self.max_chunk_size
+                )
+                nodes = semantic_chunker.chunk_document(document)
+                
+                # If semantic chunking fails or produces no chunks, fallback to sentence
+                if not nodes:
+                    logger.warning(f"Semantic chunking produced no chunks for {document.doc_id}, falling back to sentence")
+                    nodes = self.sentence_splitter.get_nodes_from_documents([document])
+                    for node in nodes:
+                        node.metadata.update({
+                            'source_document': document.doc_id,
+                            'chunking_method': 'sentence_fallback',
+                            'original_length': len(document.text),
+                            **document.metadata
+                        })
+                
+                logger.info(f"Chunked document {document.doc_id} into {len(nodes)} chunks using semantic method")
+                return nodes
+            
+            # Fallback to original methods
+            elif method == "sentence":
                 nodes = self.sentence_splitter.get_nodes_from_documents([document])
             elif method == "token":
                 nodes = self.token_splitter.get_nodes_from_documents([document])

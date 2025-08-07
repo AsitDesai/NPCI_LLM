@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=100, env="CHUNK_OVERLAP")
     chunk_separator: str = Field(default="\n\n", env="CHUNK_SEPARATOR")
     
-    # Retrieval Configuration
+        # Retrieval Configuration
     retrieval_top_k: int = Field(default=5, env="RETRIEVAL_TOP_K")
     retrieval_score_threshold: float = Field(default=0.3, env="RETRIEVAL_SCORE_THRESHOLD")
     context_max_tokens: int = Field(default=4000, env="CONTEXT_MAX_TOKENS")

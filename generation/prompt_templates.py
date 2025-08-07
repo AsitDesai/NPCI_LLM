@@ -62,34 +62,39 @@ class PromptTemplates:
         
         return self._templates[template_key]
     
-    def format_prompt(self, 
-                     query: str, 
-                     context: str, 
-                     style: PromptStyle = PromptStyle.CONCISE,
-                     **kwargs: Any) -> str:
+    def format_prompt(self, query: str, context: str, style: PromptStyle = PromptStyle.CONCISE) -> str:
         """
-        Format a complete prompt with query and context.
+        Format a prompt for the LLM with specific instructions to reduce hallucination.
         
         Args:
-            query: The user's query
-            context: Retrieved context information
-            style: The desired response style
-            **kwargs: Additional formatting parameters
+            query: User query
+            context: Retrieved context
+            style: Response style
             
         Returns:
-            Formatted prompt string
+            Formatted prompt
         """
-        template = self.get_template(style)
+        base_instruction = """You are a helpful assistant. Answer the user's question based on the provided context.
+
+Context: {context}
+
+Question: {query}
+
+Answer:"""
+
+        if style == PromptStyle.CONCISE:
+            instruction = base_instruction + "\n\nProvide a concise, direct answer."
+        elif style == PromptStyle.DETAILED:
+            instruction = base_instruction + "\n\nProvide a detailed explanation with examples."
+        elif style == PromptStyle.TECHNICAL:
+            instruction = base_instruction + "\n\nProvide a technical, precise answer with specific steps."
+        else:
+            instruction = base_instruction
         
-        # Format the template with the provided parameters
-        formatted_prompt = template.format(
-            query=query,
-            context=context,
-            **kwargs
-        )
+        prompt = instruction.format(context=context, query=query)
         
         logger.info(f"Formatted prompt with style: {style.value}")
-        return formatted_prompt
+        return prompt
     
     def _get_rag_base_template(self) -> str:
         """Get the base RAG template."""
