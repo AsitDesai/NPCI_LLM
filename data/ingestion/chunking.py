@@ -14,7 +14,7 @@ from llama_index.core.schema import TextNode
 
 from config.settings import settings
 from config.logging import get_logger
-from .semantic_chunker import SemanticChunker
+# from .semantic_chunker import SemanticChunker  # Removed - file deleted
 
 logger = get_logger(__name__)
 
@@ -82,22 +82,14 @@ class DocumentChunker:
             return []
         
         try:
-            # Use semantic chunking as primary method
+            # Use sentence splitting as primary method (semantic chunker removed)
             if method == "semantic":
-                semantic_chunker = SemanticChunker(
-                    sentence_overlap=1,
-                    min_chunk_size=self.min_chunk_size,
-                    max_chunk_size=self.max_chunk_size
-                )
-                nodes = semantic_chunker.chunk_document(document)
-                
-                # If semantic chunking fails or produces no chunks, fallback to sentence
-                if not nodes:
-                    logger.warning(f"Semantic chunking produced no chunks for {document.doc_id}, falling back to sentence")
-                    nodes = self.sentence_splitter.get_nodes_from_documents([document])
-                    for node in nodes:
-                        node.metadata.update({
-                            'source_document': document.doc_id,
+                # Fallback to sentence splitting since semantic chunker was removed
+                logger.info(f"Using sentence splitting for {document.doc_id} (semantic chunker removed)")
+                nodes = self.sentence_splitter.get_nodes_from_documents([document])
+                for node in nodes:
+                    node.metadata.update({
+                        'source_document': document.doc_id,
                             'chunking_method': 'sentence_fallback',
                             'original_length': len(document.text),
                             **document.metadata

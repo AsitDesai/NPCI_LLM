@@ -21,7 +21,7 @@ sys.path.insert(0, str(project_root))
 
 from llama_index.core import Document, VectorStoreIndex
 from llama_index.core.readers import SimpleDirectoryReader
-from llama_index.core.node_parser import SentenceSplitter
+from data.ingestion.enhanced_chunker import EnhancedChunker
 from llama_index.core.schema import TextNode
 
 from data.ingestion.data_collector import DocumentCollector
@@ -45,9 +45,9 @@ class LlamaIndexDataIngestion:
         """Initialize the LlamaIndex data ingestion pipeline."""
         self.data_collector = DocumentCollector()
         self.preprocessor = TextPreprocessor()
-        self.chunker = DocumentChunker()
+        self.enhanced_chunker = EnhancedChunker()
         
-        logger.info("LlamaIndex data ingestion pipeline initialized")
+        logger.info("LlamaIndex data ingestion pipeline initialized with enhanced chunker")
     
     def load_documents_llama_index(self, documents_dir: Optional[str] = None) -> List[Document]:
         """
@@ -138,32 +138,26 @@ class LlamaIndexDataIngestion:
         try:
             logger.info(f"Chunking {len(documents)} documents using LlamaIndex")
             
-            # Use LlamaIndex SentenceSplitter
-            text_splitter = SentenceSplitter(
-                chunk_size=settings.chunk_size,
-                chunk_overlap=settings.chunk_overlap,
-                separator=settings.chunk_separator
-            )
-            
             all_nodes = []
             
             for i, doc in enumerate(documents):
-                # Create nodes from document
-                nodes = text_splitter.get_nodes_from_documents([doc])
+                # Use enhanced chunker for each document
+                nodes = self.enhanced_chunker.chunk_document(doc)
                 
-                # Add document metadata to each node
+                # Add additional metadata
                 for j, node in enumerate(nodes):
                     node.metadata.update({
                         "doc_id": doc.metadata.get("file_name", f"doc_{i}"),
                         "chunk_index": j,
                         "total_chunks": len(nodes),
-                        "source_file": doc.metadata.get("file_name", "Unknown")
+                        "source_file": doc.metadata.get("file_name", "Unknown"),
+                        "chunking_method": "enhanced_format_detection"
                     })
                 
                 all_nodes.extend(nodes)
                 
                 logger.debug(f"Chunked document {i+1}: {doc.metadata.get('file_name', 'Unknown')} "
-                           f"into {len(nodes)} chunks")
+                           f"into {len(nodes)} chunks using enhanced chunker")
             
             logger.info(f"Created {len(all_nodes)} chunks from {len(documents)} documents")
             return all_nodes

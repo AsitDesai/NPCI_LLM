@@ -1,0 +1,421 @@
+{
+  "analysis": {
+    "total_queries": 33,
+    "successful_queries": 29,
+    "success_rate": 0.8787878787878788,
+    "avg_accuracy": 0.8551173793975188,
+    "avg_keyword_match": 0.946969696969697,
+    "avg_relevance": 0.1258741258741259,
+    "avg_confidence": 0.8166666666666667,
+    "avg_response_time": 1.3634792096687085,
+    "category_stats": {
+      "payment": {
+        "count": 5,
+        "avg_accuracy": 0.9862068965517242,
+        "avg_keyword_match": 1.0,
+        "avg_relevance": 0.10769230769230771
+      },
+      "account": {
+        "count": 5,
+        "avg_accuracy": 1.0,
+        "avg_keyword_match": 1.0,
+        "avg_relevance": 0.15384615384615385
+      },
+      "technical": {
+        "count": 6,
+        "avg_accuracy": 0.9530710835058661,
+        "avg_keyword_match": 1.0,
+        "avg_relevance": 0.2435897435897436
+      },
+      "service": {
+        "count": 5,
+        "avg_accuracy": 0.8465686274509803,
+        "avg_keyword_match": 0.85,
+        "avg_relevance": 0.015384615384615385
+      },
+      "ethics": {
+        "count": 4,
+        "avg_accuracy": 0.7165178571428572,
+        "avg_keyword_match": 0.75,
+        "avg_relevance": 0.057692307692307696
+      },
+      "edge_case": {
+        "count": 5,
+        "avg_accuracy": 0.8333333333333334,
+        "avg_keyword_match": 1.0,
+        "avg_relevance": 0.0
+      },
+      "complex": {
+        "count": 3,
+        "avg_accuracy": 0.43461043461043464,
+        "avg_keyword_match": 1.0,
+        "avg_relevance": 0.35897435897435903
+      }
+    }
+  },
+  "results": [
+    {
+      "query": "How can I check my payment status?",
+      "ground_truth": "You can check your payment status by logging into your account dashboard and navigating to the 'Billing' section. Alternatively, you can contact our customer support team with your account number for immediate assistance.",
+      "prediction": "You can check your payment status by logging into your account dashboard and navigating to the \"Billing\" section. Alternatively, you can contact our customer support team with your account number for immediate assistance.",
+      "confidence": 0.8999999999999999,
+      "response_time": 1.5311369895935059,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "payment"
+    },
+    {
+      "query": "What payment methods do you accept?",
+      "ground_truth": "We accept all major credit cards (Visa, MasterCard, American Express), debit cards, bank transfers, and digital wallets including PayPal and Apple Pay.",
+      "prediction": "We accept all major credit cards (Visa, MasterCard, American Express), debit cards, bank transfers, and digital wallets including PayPal and Apple Pay.",
+      "confidence": 0.8999999999999999,
+      "response_time": 1.1603543758392334,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "payment"
+    },
+    {
+      "query": "Can I get a refund?",
+      "ground_truth": "Yes, we offer a 30-day money-back guarantee. If you're not completely satisfied with our service, you can request a full refund within 30 days of your purchase.",
+      "prediction": "Hi there! Yes, we offer a 30-day money-back guarantee. If you're not completely satisfied with our service, you can request a full refund within 30 days of your purchase.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.2037043571472168,
+      "accuracy_score": 0.9310344827586207,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "payment"
+    },
+    {
+      "query": "How do I update my billing information?",
+      "ground_truth": "You can update your billing information by going to Account Settings > Billing Information. Make sure to update both your payment method and billing address.",
+      "prediction": "You can update your billing information by going to Account Settings > Billing Information. Make sure to update both your payment method and billing address.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.475825548171997,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "payment"
+    },
+    {
+      "query": "How do I reset my password?",
+      "ground_truth": "Click on 'Forgot Password' on the login page, enter your email address, and follow the instructions sent to your email. The reset link will expire in 24 hours.",
+      "prediction": "Click on \"Forgot Password\" on the login page, enter your email address, and follow the instructions sent to your email. The reset link will expire in 24 hours.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.2451753616333008,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "account"
+    },
+    {
+      "query": "How do I cancel my subscription?",
+      "ground_truth": "You can cancel your subscription at any time by going to Account Settings > Subscription > Cancel. Your access will continue until the end of your current billing period.",
+      "prediction": "You can cancel your subscription at any time by going to Account Settings > Subscription > Cancel. Your access will continue until the end of your current billing period.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.158729076385498,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "account"
+    },
+    {
+      "query": "Is my personal information secure?",
+      "ground_truth": "Yes, we use industry-standard encryption and security measures to protect your personal and payment information. We never store your credit card details on our servers.",
+      "prediction": "Yes, we use industry-standard encryption and security measures to protect your personal and payment information. We never store your credit card details on our servers.",
+      "confidence": 0.7999999999999999,
+      "response_time": 2.4351556301116943,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "account"
+    },
+    {
+      "query": "Can I have multiple users on one account?",
+      "ground_truth": "Yes, depending on your subscription plan. Basic plans allow 1 user, Professional plans allow up to 5 users, and Enterprise plans support unlimited users.",
+      "prediction": "Yes, depending on your subscription plan. Basic plans allow 1 user, Professional plans allow up to 5 users, and Enterprise plans support unlimited users.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.318610429763794,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.15384615384615385,
+      "category": "account"
+    },
+    {
+      "query": "How do I download my data?",
+      "ground_truth": "You can export your data by going to Account Settings > Data Export. Choose the format you prefer (CSV, JSON, or PDF) and click 'Export Data.'",
+      "prediction": "Go to Account Settings > Data Export. Choose the format you prefer (CSV, JSON, or PDF) and click \"Export Data.\"",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.2049670219421387,
+      "accuracy_score": 0.7619047619047619,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.15384615384615385,
+      "category": "technical"
+    },
+    {
+      "query": "What browsers do you support?",
+      "ground_truth": "We support all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using the latest version of Chrome.",
+      "prediction": "We support all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using the latest version of Chrome.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.1536002159118652,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.46153846153846156,
+      "category": "technical"
+    },
+    {
+      "query": "The website is loading slowly, what should I do?",
+      "ground_truth": "Try clearing your browser cache and cookies, or try accessing the site from a different browser. If the problem persists, contact our technical support team.",
+      "prediction": "## Technical Response\n\nTry clearing your browser cache and cookies, or try accessing the site from a different browser. If the problem persists, contact our technical support team.",
+      "confidence": 0.85,
+      "response_time": 1.3613288402557373,
+      "accuracy_score": 0.9565217391304348,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "technical"
+    },
+    {
+      "query": "I can't log into my account, what's wrong?",
+      "ground_truth": "Check that you're using the correct email and password. If you've forgotten your password, use the 'Forgot Password' feature. If you're still having issues, contact support.",
+      "prediction": "Check that you're using the correct email and password. If you've forgotten your password, use the \"Forgot Password\" feature. If you're still having issues, contact support.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.1968879699707031,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.15384615384615385,
+      "category": "technical"
+    },
+    {
+      "query": "What's included in the free trial?",
+      "ground_truth": "Our free trial includes all premium features for 14 days. No credit card is required to start your trial, and you can cancel at any time.",
+      "prediction": "Our free trial includes all premium features for 14 days. No credit card is required to start your trial, and you can cancel at any time.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.2461082935333252,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "service"
+    },
+    {
+      "query": "How often do you update your features?",
+      "ground_truth": "We release new features and improvements monthly. You can stay updated by following our blog or checking the 'What's New' section in your dashboard.",
+      "prediction": "We release new features and improvements monthly.",
+      "confidence": 0.7,
+      "response_time": 1.1989734172821045,
+      "accuracy_score": 0.2916666666666667,
+      "keyword_match_score": 0.25,
+      "relevance_score": 0.0,
+      "category": "service"
+    },
+    {
+      "query": "Do you offer customer support on weekends?",
+      "ground_truth": "Our customer support team is available Monday through Friday, 9 AM to 6 PM EST. For urgent issues outside these hours, you can submit a ticket and we'll respond within 24 hours.",
+      "prediction": "Hi there! Our customer support team is available Monday through Friday, 9 AM to 6 PM EST. For urgent issues outside these hours, you can submit a ticket and we'll respond within 24 hours.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.3926219940185547,
+      "accuracy_score": 0.9411764705882353,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "service"
+    },
+    {
+      "query": "Can I integrate this with other software?",
+      "ground_truth": "Yes, we offer API access and integrations with popular tools like Slack, Zapier, and Microsoft Office. Check our integrations page for the full list.",
+      "prediction": "Yes, we offer API access and integrations with popular tools like Slack, Zapier, and Microsoft Office. Check our integrations page for the full list.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.1261627674102783,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "service"
+    },
+    {
+      "query": "What should I do to verify customer identity?",
+      "ground_truth": "DO always verify customer identity before processing any payment transactions to prevent fraud and ensure security.",
+      "prediction": "Always verify customer identity before processing any payment transactions to prevent fraud and ensure security.",
+      "confidence": 0.8999999999999999,
+      "response_time": 2.274868965148926,
+      "accuracy_score": 0.9375,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "ethics"
+    },
+    {
+      "query": "How should I handle payment records?",
+      "ground_truth": "DO maintain detailed records of all payment transactions for audit purposes and regulatory compliance.",
+      "prediction": "Maintain detailed records of all payment transactions for audit purposes and regulatory compliance.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.0409631729125977,
+      "accuracy_score": 0.9285714285714286,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "ethics"
+    },
+    {
+      "query": "What payment gateways should I use?",
+      "ground_truth": "DO use secure, encrypted payment gateways and follow PCI DSS standards for handling sensitive payment data.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 3.6012370586395264,
+      "accuracy_score": 0.0,
+      "keyword_match_score": 0.0,
+      "relevance_score": 0.0,
+      "category": "ethics"
+    },
+    {
+      "query": "Should I store credit card numbers?",
+      "ground_truth": "DON'T store credit card numbers or sensitive payment information in plain text or unsecured databases.",
+      "prediction": "DON'T store credit card numbers or sensitive payment information in plain text or unsecured databases.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.3524301052093506,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.07692307692307693,
+      "category": "ethics"
+    },
+    {
+      "query": "browser support",
+      "ground_truth": "We support all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using the latest version of Chrome.",
+      "prediction": "We support all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using the latest version of Chrome.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.0411596298217773,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.46153846153846156,
+      "category": "technical"
+    },
+    {
+      "query": "download data export",
+      "ground_truth": "You can export your data by going to Account Settings > Data Export. Choose the format you prefer (CSV, JSON, or PDF) and click 'Export Data.'",
+      "prediction": "You can export your data by going to Account Settings > Data Export. Choose the format you prefer (CSV, JSON, or PDF) and click \"Export Data.\"",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.4004030227661133,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.15384615384615385,
+      "category": "technical"
+    },
+    {
+      "query": "cancel subscription",
+      "ground_truth": "You can cancel your subscription at any time by going to Account Settings > Subscription > Cancel. Your access will continue until the end of your current billing period.",
+      "prediction": "You can cancel your subscription at any time by going to Account Settings > Subscription > Cancel. Your access will continue until the end of your current billing period.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.1199142932891846,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "account"
+    },
+    {
+      "query": "payment methods accepted",
+      "ground_truth": "We accept all major credit cards (Visa, MasterCard, American Express), debit cards, bank transfers, and digital wallets including PayPal and Apple Pay.",
+      "prediction": "We accept all major credit cards (Visa, MasterCard, American Express), debit cards, bank transfers, and digital wallets including PayPal and Apple Pay.",
+      "confidence": 0.8999999999999999,
+      "response_time": 1.0509982109069824,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "payment"
+    },
+    {
+      "query": "free trial features",
+      "ground_truth": "Our free trial includes all premium features for 14 days. No credit card is required to start your trial, and you can cancel at any time.",
+      "prediction": "Our free trial includes all premium features for 14 days. No credit card is required to start your trial, and you can cancel at any time.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.0717418193817139,
+      "accuracy_score": 1.0,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "service"
+    },
+    {
+      "query": "What is the meaning of life?",
+      "ground_truth": "I don't have enough information to answer this question.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 0.958676815032959,
+      "accuracy_score": 0.8333333333333334,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "edge_case"
+    },
+    {
+      "query": "How to make a sandwich?",
+      "ground_truth": "I don't have enough information to answer this question.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 0.9588091373443604,
+      "accuracy_score": 0.8333333333333334,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "edge_case"
+    },
+    {
+      "query": "What is the weather like?",
+      "ground_truth": "I don't have enough information to answer this question.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.167344093322754,
+      "accuracy_score": 0.8333333333333334,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "edge_case"
+    },
+    {
+      "query": "Tell me a joke",
+      "ground_truth": "I don't have enough information to answer this question.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 0.9940569400787354,
+      "accuracy_score": 0.8333333333333334,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "edge_case"
+    },
+    {
+      "query": "What time is it?",
+      "ground_truth": "I don't have enough information to answer this question.",
+      "prediction": "Hi there! I don't have enough information to answer this question.",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.0731027126312256,
+      "accuracy_score": 0.8333333333333334,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.0,
+      "category": "edge_case"
+    },
+    {
+      "query": "How do I check my payment status and update billing information?",
+      "ground_truth": "You can check your payment status by logging into your account dashboard and navigating to the 'Billing' section. You can update your billing information by going to Account Settings > Billing Information.",
+      "prediction": "You can check your payment status by logging into your account dashboard and navigating to the \"Billing\" section. Alternatively, you can contact our customer support team with your account number for immediate assistance. You can update your billing information by going to Account Settings > Billing Information. Make sure to update both your payment method and billing address.",
+      "confidence": 0.8999999999999999,
+      "response_time": 1.8421175479888916,
+      "accuracy_score": 0.5675675675675675,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "complex"
+    },
+    {
+      "query": "What browsers are supported and how do I download my data?",
+      "ground_truth": "We support all modern browsers including Chrome, Firefox, Safari, and Edge. You can export your data by going to Account Settings > Data Export.",
+      "prediction": "Supported browsers: Chrome, Firefox, Safari, and Edge. For the best experience, use the latest version of Chrome. To download your data: Go to Account Settings > Data Export. Choose the format (CSV, JSON, or PDF) and click \"Export Data.\"",
+      "confidence": 0.7999999999999999,
+      "response_time": 1.277421236038208,
+      "accuracy_score": 0.3076923076923077,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.6153846153846154,
+      "category": "complex"
+    },
+    {
+      "query": "How do I reset my password and cancel my subscription?",
+      "ground_truth": "Click on 'Forgot Password' on the login page to reset your password. You can cancel your subscription by going to Account Settings > Subscription > Cancel.",
+      "prediction": "Click on \"Forgot Password\" on the login page, enter your email address, and follow the instructions sent to your email. The reset link will expire in 24 hours. You can cancel your subscription at any time by going to Account Settings > Subscription > Cancel. Your access will continue until the end of your current billing period.",
+      "confidence": 0.8999999999999999,
+      "response_time": 1.3602268695831299,
+      "accuracy_score": 0.42857142857142855,
+      "keyword_match_score": 1.0,
+      "relevance_score": 0.23076923076923078,
+      "category": "complex"
+    }
+  ]
+}

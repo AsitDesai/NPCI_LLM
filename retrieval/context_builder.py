@@ -10,7 +10,7 @@ import re
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
-from .retriever import RetrievalResult
+from .enhanced_retriever import RetrievalResult
 from config.settings import settings
 from config.logging import get_logger
 
@@ -107,7 +107,8 @@ class ContextBuilder:
                 # Update tracking
                 total_tokens += chunk_tokens
                 included_chunks.append(result)
-                sources.add(result.source_document)
+                source_file = result.metadata.get('source_file', 'Unknown')
+                sources.add(source_file)
                 chunk_scores.append(result.score)
             
             # Join context parts
@@ -168,7 +169,8 @@ class ContextBuilder:
         
         if include_sources:
             # Extract file name from source document
-            source_name = result.source_document.split('/')[-1] if result.source_document else "Unknown"
+            source_file = result.metadata.get('source_file', 'Unknown')
+            source_name = source_file.split('/')[-1] if source_file else "Unknown"
             
             # Add source information
             formatted_text = f"[Source: {source_name}, Score: {result.score:.3f}]\n{text}"

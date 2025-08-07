@@ -220,11 +220,25 @@ class QdrantVectorStore:
             # Format results
             results = []
             for point in search_result:
+                # Extract text from the payload
+                text = point.payload.get("text", "")
+                
+                # If text is empty or just "...", try to extract from _node_content
+                if not text or text == "...":
+                    node_content = point.payload.get("_node_content", "")
+                    if node_content:
+                        try:
+                            import json
+                            node_data = json.loads(node_content)
+                            text = node_data.get("text", "")
+                        except (json.JSONDecodeError, KeyError):
+                            text = ""
+                
                 result = {
                     "id": point.id,
                     "score": point.score,
-                    "text": point.payload.get("text", ""),
-                    "metadata": {k: v for k, v in point.payload.items() if k != "text"}
+                    "text": text,
+                    "metadata": {k: v for k, v in point.payload.items() if k not in ["text", "_node_content"]}
                 }
                 results.append(result)
             
@@ -234,6 +248,23 @@ class QdrantVectorStore:
         except Exception as e:
             logger.error(f"Error searching embeddings: {e}")
             return []
+    
+    def search(self, 
+               query_embedding: List[float], 
+               top_k: int = 5,
+               score_threshold: Optional[float] = None) -> List[Dict[str, Any]]:
+        """
+        Search for similar embeddings (alias for search_similar).
+        
+        Args:
+            query_embedding: Query embedding vector
+            top_k: Number of top results to return
+            score_threshold: Minimum similarity score threshold
+            
+        Returns:
+            List of search results with metadata
+        """
+        return self.search_similar(query_embedding, top_k, score_threshold)
     
     def get_collection_stats(self) -> Optional[VectorStoreStats]:
         """

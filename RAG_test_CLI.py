@@ -15,9 +15,9 @@ sys.path.insert(0, str(project_root))
 from generation.prompt_templates import PromptTemplates, PromptStyle
 from generation.generator import ResponseGenerator, MockResponseGenerator
 from generation.post_processor import PostProcessor
-from retrieval.retriever import SemanticRetriever
+from retrieval.enhanced_retriever import EnhancedRetriever, RerankingConfig
 from retrieval.context_builder import ContextBuilder
-from embeddings.embedder import LlamaIndexEmbedder
+from embeddings.enhanced_embedder import EnhancedEmbedder, EmbeddingConfig
 from embeddings.vector_store import QdrantVectorStore
 
 
@@ -29,10 +29,20 @@ class RAGCLI:
         print("🚀 Initializing RAG System...")
         
         try:
-            # Initialize components
-            self.embedder = LlamaIndexEmbedder()
+            # Initialize enhanced components
+            self.embedder = EnhancedEmbedder()
             self.vector_store = QdrantVectorStore()
-            self.retriever = SemanticRetriever(self.embedder, self.vector_store)
+            
+            # Configure enhanced retriever with reranking
+            reranking_config = RerankingConfig(
+                rerank_top_k=50,
+                keyword_boost=2.0,
+                semantic_weight=0.6,
+                keyword_weight=0.4,
+                min_score_threshold=0.1
+            )
+            self.retriever = EnhancedRetriever(self.embedder, self.vector_store, reranking_config)
+            
             self.context_builder = ContextBuilder()
             self.prompt_templates = PromptTemplates()
             
