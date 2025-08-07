@@ -58,8 +58,8 @@ class Settings(BaseSettings):
     log_file: str = Field(default="./logs/rag_system.log", env="LOG_FILE")
     
     # LlamaIndex Chunking Settings (Simple and Stable)
-    chunk_size: int = Field(default=1024, env="CHUNK_SIZE")
-    chunk_overlap: int = Field(default=200, env="CHUNK_OVERLAP")
+    chunk_size: int = Field(default=256, env="CHUNK_SIZE")
+    chunk_overlap: int = Field(default=100, env="CHUNK_OVERLAP")
     chunk_separator: str = Field(default="\n\n", env="CHUNK_SEPARATOR")
     
     # Retrieval Configuration

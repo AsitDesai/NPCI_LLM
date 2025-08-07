@@ -72,8 +72,26 @@ class RAGCLI:
                 print("⚠️ No retrieval results found, using fallback context")
                 return "Based on available information, I'll provide a general response."
             
+            # Convert LlamaIndex Document objects to RetrievalResult objects
+            from retrieval.retriever import RetrievalResult
+            
+            retrieval_results = []
+            for i, doc in enumerate(results):
+                # Extract text from LlamaIndex Document
+                text = self._extract_text_from_llama_document(doc)
+                
+                # Create RetrievalResult object
+                retrieval_result = RetrievalResult(
+                    text=text,
+                    score=0.8,  # Default score since LlamaIndex doesn't provide scores
+                    metadata=doc.metadata if hasattr(doc, 'metadata') else {},
+                    source_document=doc.metadata.get('file_name', 'unknown') if hasattr(doc, 'metadata') else 'unknown',
+                    chunk_index=doc.metadata.get('chunk_index', i) if hasattr(doc, 'metadata') else i
+                )
+                retrieval_results.append(retrieval_result)
+            
             # Build context
-            context_info = self.context_builder.build_context(results, query)
+            context_info = self.context_builder.build_context(retrieval_results, query)
             context = context_info.context
             context_time = time.time() - start_time - retrieval_time
             
@@ -86,6 +104,31 @@ class RAGCLI:
         except Exception as e:
             print(f"❌ Error retrieving context: {e}")
             return "Error retrieving context. Using fallback."
+    
+    def _extract_text_from_llama_document(self, doc) -> str:
+        """Extract text from LlamaIndex Document object."""
+        # Try direct text attribute first
+        if hasattr(doc, 'text') and doc.text:
+            return doc.text
+        
+        # Try to extract from metadata if text is not directly available
+        if hasattr(doc, 'metadata') and doc.metadata:
+            # Check if text is in metadata
+            if 'text' in doc.metadata:
+                return doc.metadata['text']
+            
+            # Check if text is in _node_content (common in LlamaIndex)
+            if '_node_content' in doc.metadata:
+                import json
+                try:
+                    node_content = json.loads(doc.metadata['_node_content'])
+                    if 'text' in node_content:
+                        return node_content['text']
+                except:
+                    pass
+        
+        # Fallback to string representation
+        return str(doc)
     
     def build_prompt(self, query: str, context: str, style: str = "concise") -> str:
         """Build a prompt for generation."""
