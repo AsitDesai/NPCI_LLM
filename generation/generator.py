@@ -6,6 +6,7 @@ It includes the main ResponseGenerator class and MistralResponseGenerator implem
 """
 
 import os
+import requests
 from typing import Optional, Dict, Any
 import structlog
 from mistralai import Mistral, UserMessage, AssistantMessage
@@ -19,13 +20,31 @@ class ResponseGenerator:
     Main response generator class.
     
     This class provides a unified interface for generating responses
-    using different LLM backends, with Mistral AI as the primary choice.
+    using the configured server model endpoint.
     """
     
     def __init__(self):
         """Initialize the response generator."""
         logger.info("Initializing response generator")
-        self.mistral_generator = MistralResponseGenerator()
+        
+        # Try to initialize server generator first
+        try:
+            self.server_generator = ServerResponseGenerator()
+            self.generator_type = "server"
+            logger.info("✅ Using server model endpoint for generation")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize server generator: {e}")
+            # Fallback to Mistral if server fails
+            try:
+                self.mistral_generator = MistralResponseGenerator()
+                self.generator_type = "mistral"
+                logger.info("⚠️  Falling back to Mistral AI for generation")
+            except Exception as e2:
+                logger.error(f"❌ Failed to initialize Mistral generator: {e2}")
+                # Final fallback to mock generator
+                self.mock_generator = MockResponseGenerator()
+                self.generator_type = "mock"
+                logger.info("⚠️  Using mock generator as final fallback")
     
     def generate(self, prompt: str, style: str = "concise", **kwargs) -> str:
         """
@@ -51,14 +70,116 @@ class ResponseGenerator:
             
             temperature = temperature_map.get(style.lower(), 0.7)
             
-            return self.mistral_generator.generate_response(
-                prompt, 
-                temperature=temperature
-            )
+            # Use the appropriate generator based on what was initialized
+            if hasattr(self, 'server_generator') and self.generator_type == "server":
+                return self.server_generator.generate_response(
+                    prompt, 
+                    temperature=temperature
+                )
+            elif hasattr(self, 'mistral_generator') and self.generator_type == "mistral":
+                return self.mistral_generator.generate_response(
+                    prompt, 
+                    temperature=temperature
+                )
+            else:
+                return self.mock_generator.generate(
+                    prompt, 
+                    style=style
+                )
             
         except Exception as e:
             logger.error(f"Error generating response: {e}")
             return f"Error generating response: {str(e)}"
+
+
+class ServerResponseGenerator:
+    """
+    Server endpoint response generator implementation.
+    
+    This class handles interaction with the configured server endpoint
+    for generating responses.
+    """
+    
+    def __init__(self):
+        """Initialize the server generator."""
+        logger.info("Initializing server response generator")
+        
+        # Get server endpoint from environment
+        self.server_endpoint = os.getenv("SERVER_MODEL_ENDPOINT")
+        self.api_key = os.getenv("SERVER_MODEL_API_KEY")
+        
+        if not self.server_endpoint:
+            raise ValueError("SERVER_MODEL_ENDPOINT environment variable is required")
+        
+        logger.info(f"Server endpoint configured: {self.server_endpoint}")
+    
+    def generate_response(self, 
+                        prompt: str, 
+                        max_tokens: Optional[int] = None,
+                        temperature: float = 0.7,
+                        stream: bool = False) -> str:
+        """
+        Generate a response from the server endpoint.
+        
+        Args:
+            prompt: The input prompt
+            max_tokens: Maximum tokens to generate (None for default)
+            temperature: Generation temperature (0.0 to 1.0)
+            stream: Whether to use streaming (not supported by server endpoint)
+            
+        Returns:
+            Generated response string
+        """
+        try:
+            # Prepare the request payload
+            payload = {
+                "model": "NPCI_Greviance",  # Using the actual model from the server endpoint
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": temperature
+            }
+            
+            if max_tokens:
+                payload["max_tokens"] = max_tokens
+            
+            # Set headers
+            headers = {"Content-Type": "application/json"}
+            if self.api_key and self.api_key != "your_server_model_api_key_here":
+                headers["Authorization"] = f"Bearer {self.api_key}"
+            
+            # Make the request to the chat completions endpoint
+            chat_endpoint = f"{self.server_endpoint}/v1/chat/completions"
+            logger.info(f"Sending request to chat endpoint: {chat_endpoint}")
+            response = requests.post(
+                chat_endpoint,
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                # Extract response content (handle different response formats)
+                if "choices" in result and len(result["choices"]) > 0:
+                    content = result["choices"][0].get("message", {}).get("content", "")
+                elif "response" in result:
+                    content = result["response"]
+                elif "content" in result:
+                    content = result["content"]
+                else:
+                    content = str(result)
+                
+                logger.info(f"Generated response with {len(content)} characters")
+                return content
+            else:
+                logger.error(f"Server endpoint error: {response.status_code} - {response.text}")
+                raise Exception(f"Server endpoint returned status {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Error generating server response: {e}")
+            raise
 
 
 class MistralResponseGenerator:

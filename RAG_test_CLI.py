@@ -6,11 +6,19 @@ Simple CLI for testing the RAG pipeline.
 
 import sys
 import time
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Add the project root to Python path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
+
+# Load environment variables from env.server
+load_dotenv(project_root / "env.server")
+print(f"✅ Environment loaded from: {project_root / 'env.server'}")
+print(f"🔧 SERVER_MODEL_ENDPOINT: {os.getenv('SERVER_MODEL_ENDPOINT', '❌ Not set')}")
+print(f"🔑 SERVER_MODEL_API_KEY: {os.getenv('SERVER_MODEL_API_KEY', '❌ Not set or default')}")
 
 from generation.prompt_templates import PromptTemplates, PromptStyle
 from generation.generator import ResponseGenerator, MockResponseGenerator
@@ -49,7 +57,7 @@ class RAGCLI:
             # Initialize generator
             try:
                 self.generator = ResponseGenerator()
-                print("✅ Real Mistral generator initialized")
+                print("✅ Real Server generator initialized")
             except Exception as e:
                 print(f"⚠️ Using mock generator: {e}")
                 self.generator = MockResponseGenerator()

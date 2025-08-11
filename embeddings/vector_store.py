@@ -60,11 +60,12 @@ class QdrantVectorStore:
                 timeout=30.0  # Add timeout for cloud connections
             )
         else:
-            # For local URLs, use host and port
+            # For local URLs, use host and port with https=False to avoid SSL issues
             self.client = QdrantClient(
                 host=settings.qdrant_host,
                 port=settings.qdrant_port,
-                api_key=settings.qdrant_api_key
+                api_key=settings.qdrant_api_key,
+                https=False  # Disable SSL to avoid "wrong version number" error
             )
         
         # Initialize LlamaIndex Qdrant store
