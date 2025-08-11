@@ -212,27 +212,8 @@ class EvaluationMetrics:
     
     def export_results(self, filepath: str):
         """Export evaluation results to JSON."""
-        import json
-        
-        data = []
-        for result in self.results:
-            data.append({
-                'test_case_id': result.test_case_id,
-                'query': result.query,
-                'expected_answer': result.expected_answer,
-                'actual_answer': result.actual_answer,
-                'accuracy_score': result.accuracy_score,
-                'relevance_score': result.relevance_score,
-                'completeness_score': result.completeness_score,
-                'response_time': result.response_time,
-                'category': result.category,
-                'domain': result.domain,
-                'difficulty': result.difficulty,
-                'metadata': result.metadata
-            })
-        
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
+        # File saving functionality has been removed
+        print("💾 File saving functionality has been removed")
     
     def generate_report(self) -> str:
         """Generate a comprehensive evaluation report."""

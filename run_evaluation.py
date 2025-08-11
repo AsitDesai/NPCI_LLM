@@ -181,15 +181,7 @@ def main():
     summary_report = benchmark.generate_summary_report()
     print(summary_report)
     
-    # Save summary report
-    timestamp = int(time.time())
-    summary_file = Path(args.output_dir) / f"summary_report_{timestamp}.txt"
-    with open(summary_file, 'w') as f:
-        f.write(summary_report)
-    
     print(f"\n✅ Evaluation completed!")
-    print(f"📄 Summary report saved to: {summary_file}")
-    print(f"📁 All results saved to: {args.output_dir}/")
     
     print("\n" + "="*80)
     print("🎯 NEXT STEPS")

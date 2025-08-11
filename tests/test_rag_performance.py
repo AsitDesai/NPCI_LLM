@@ -530,30 +530,8 @@ class RAGPerformanceTester:
     
     def save_results(self, analysis: Dict[str, Any], filename: str = "rag_test_results.json"):
         """Save test results to JSON file."""
-        # Convert dataclasses to dictionaries for JSON serialization
-        results_dict = []
-        for result in analysis['results']:
-            results_dict.append({
-                'query': result.query,
-                'ground_truth': result.ground_truth,
-                'prediction': result.prediction,
-                'confidence': result.confidence,
-                'response_time': result.response_time,
-                'accuracy_score': result.accuracy_score,
-                'keyword_match_score': result.keyword_match_score,
-                'relevance_score': result.relevance_score,
-                'category': result.category
-            })
-        
-        output = {
-            'analysis': {k: v for k, v in analysis.items() if k != 'results'},
-            'results': results_dict
-        }
-        
-        with open(filename, 'w') as f:
-            json.dump(output, f, indent=2)
-        
-        print(f"💾 Results saved to {filename}")
+        # File saving functionality has been removed
+        print("💾 File saving functionality has been removed")
 
 
 def main():

@@ -44,19 +44,7 @@ class FintechBenchmark:
         # Print results
         self.evaluator.print_summary()
         
-        # Save results
-        timestamp = int(time.time())
-        results_file = self.output_dir / f"quick_benchmark_{timestamp}.json"
-        self.evaluator.export_results(str(results_file))
-        
-        # Generate report
-        report_file = self.output_dir / f"quick_benchmark_{timestamp}.txt"
-        with open(report_file, 'w') as f:
-            f.write(self.evaluator.get_evaluation_report())
-        
         print(f"\n✅ Quick benchmark completed in {total_time:.2f}s")
-        print(f"📊 Results saved to: {results_file}")
-        print(f"📄 Report saved to: {report_file}")
         
         return summary
     
@@ -72,19 +60,7 @@ class FintechBenchmark:
         # Print results
         self.evaluator.print_summary()
         
-        # Save results
-        timestamp = int(time.time())
-        results_file = self.output_dir / f"comprehensive_benchmark_{timestamp}.json"
-        self.evaluator.export_results(str(results_file))
-        
-        # Generate detailed report
-        report_file = self.output_dir / f"comprehensive_benchmark_{timestamp}.txt"
-        with open(report_file, 'w') as f:
-            f.write(self.evaluator.get_evaluation_report())
-        
         print(f"\n✅ Comprehensive benchmark completed in {total_time:.2f}s")
-        print(f"📊 Results saved to: {results_file}")
-        print(f"📄 Report saved to: {report_file}")
         
         return summary
     
@@ -100,13 +76,7 @@ class FintechBenchmark:
         # Print results
         self.evaluator.print_summary()
         
-        # Save results
-        timestamp = int(time.time())
-        results_file = self.output_dir / f"category_{category.lower()}_{timestamp}.json"
-        self.evaluator.export_results(str(results_file))
-        
         print(f"\n✅ Category benchmark completed in {total_time:.2f}s")
-        print(f"📊 Results saved to: {results_file}")
         
         return summary
     
@@ -122,13 +92,7 @@ class FintechBenchmark:
         # Print results
         self.evaluator.print_summary()
         
-        # Save results
-        timestamp = int(time.time())
-        results_file = self.output_dir / f"domain_{domain.lower()}_{timestamp}.json"
-        self.evaluator.export_results(str(results_file))
-        
         print(f"\n✅ Domain benchmark completed in {total_time:.2f}s")
-        print(f"📊 Results saved to: {results_file}")
         
         return summary
     
@@ -150,14 +114,7 @@ class FintechBenchmark:
         print(f"   Average Accuracy: {avg_metrics['avg_accuracy']:.3f} ± {std_metrics.get('avg_accuracy_std', 0):.3f}")
         print(f"   Average Response Time: {avg_metrics['avg_response_time']:.3f}s ± {std_metrics.get('avg_response_time_std', 0):.3f}s")
         
-        # Save results
-        timestamp = int(time.time())
-        results_file = self.output_dir / f"performance_benchmark_{timestamp}.json"
-        with open(results_file, 'w') as f:
-            json.dump(benchmark_results, f, indent=2)
-        
         print(f"\n✅ Performance benchmark completed in {total_time:.2f}s")
-        print(f"📊 Results saved to: {results_file}")
         
         return benchmark_results
     
@@ -166,35 +123,10 @@ class FintechBenchmark:
         print("🔄 Running Comparison Benchmark...")
         print("="*50)
         
-        # Load baseline results
-        with open(baseline_file, 'r') as f:
-            baseline_results = json.load(f)
+        print("⚠️  Comparison benchmark requires baseline files which are no longer saved.")
+        print("   This functionality has been disabled due to removal of file saving.")
         
-        # Run current evaluation
-        summary = self.evaluator.evaluate_all()
-        
-        # Compare with baseline
-        comparison = self.evaluator.compare_with_baseline(baseline_results)
-        
-        # Print comparison
-        print(f"\n📊 Comparison Results:")
-        current = comparison['current']
-        baseline = comparison['baseline']
-        improvement = comparison['improvement']
-        
-        print(f"   Current Accuracy: {current['avg_accuracy']:.3f}")
-        print(f"   Baseline Accuracy: {baseline['avg_accuracy']:.3f}")
-        print(f"   Improvement: {improvement.get('avg_accuracy', 0):.1f}%")
-        
-        # Save comparison
-        timestamp = int(time.time())
-        comparison_file = self.output_dir / f"comparison_{timestamp}.json"
-        with open(comparison_file, 'w') as f:
-            json.dump(comparison, f, indent=2)
-        
-        print(f"📊 Comparison saved to: {comparison_file}")
-        
-        return comparison
+        return {}
     
     def run_all_benchmarks(self) -> Dict[str, Any]:
         """Run all available benchmarks."""
@@ -225,14 +157,7 @@ class FintechBenchmark:
         print("\n4. Performance Benchmark")
         all_results['performance'] = self.run_performance_benchmark()
         
-        # Save all results
-        timestamp = int(time.time())
-        all_results_file = self.output_dir / f"all_benchmarks_{timestamp}.json"
-        with open(all_results_file, 'w') as f:
-            json.dump(all_results, f, indent=2)
-        
         print(f"\n✅ All benchmarks completed!")
-        print(f"📊 All results saved to: {all_results_file}")
         
         return all_results
     
@@ -244,30 +169,9 @@ class FintechBenchmark:
         report.append("="*80)
         report.append("")
         
-        # Get all result files
-        result_files = list(self.output_dir.glob("*.json"))
-        
-        if not result_files:
-            report.append("No benchmark results found.")
-            return "\n".join(report)
-        
-        report.append(f"Found {len(result_files)} benchmark result files:")
+        report.append("⚠️  File saving functionality has been removed.")
+        report.append("   No benchmark result files are available for summary.")
+        report.append("   Results are only displayed in the console output.")
         report.append("")
-        
-        for result_file in result_files:
-            try:
-                with open(result_file, 'r') as f:
-                    data = json.load(f)
-                
-                if 'overall_metrics' in data:
-                    metrics = data['overall_metrics']
-                    report.append(f"📊 {result_file.stem}:")
-                    report.append(f"   Accuracy: {metrics.get('avg_accuracy', 0):.3f}")
-                    report.append(f"   Tests: {metrics.get('total_tests', 0)}")
-                    report.append("")
-                
-            except Exception as e:
-                report.append(f"❌ Error reading {result_file}: {e}")
-                report.append("")
         
         return "\n".join(report) 

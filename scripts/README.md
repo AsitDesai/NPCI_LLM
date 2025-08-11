@@ -147,9 +147,7 @@ If connectivity tests fail:
 
 ## Report Files
 
-Test runs generate timestamped report files:
-- `test_report_YYYYMMDD_HHMMSS.txt`: Detailed test results
-- `system_status_YYYYMMDD_HHMMSS.txt`: System status summary
+**Note**: File saving functionality has been removed. Test results are now displayed only in the console output.
 
 ## Exit Codes
 

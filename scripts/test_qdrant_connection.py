@@ -41,9 +41,9 @@ def load_environment() -> Dict[str, Any]:
 def test_qdrant_connection(config: Dict[str, Any]) -> Dict[str, Any]:
     """Test basic Qdrant connection."""
     try:
-        # Parse host and port
-        host, port = config['qdrant_host'].split(':')
-        port = int(port)
+        # Use host and port from config (they're already separate)
+        host = config['qdrant_host']
+        port = config['qdrant_port']
         
         # Create client with different connection options
         client_options = [
@@ -98,7 +98,7 @@ def test_qdrant_connection(config: Dict[str, Any]) -> Dict[str, Any]:
             return {
                 'success': False,
                 'error': 'All connection methods failed',
-                'connection_info': config['qdrant_host']
+                'connection_info': f"{host}:{port}"
             }
         
         return {
@@ -112,7 +112,7 @@ def test_qdrant_connection(config: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'success': False,
             'error': str(e),
-            'connection_info': config['qdrant_host']
+            'connection_info': f"{host}:{port}"
         }
 
 def test_collection_operations(client: QdrantClient, config: Dict[str, Any]) -> Dict[str, Any]:

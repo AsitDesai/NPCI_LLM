@@ -188,17 +188,6 @@ def main():
     report = generate_report(results, analysis)
     print("\n" + report)
     
-    # Save report to file
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_file = f"test_report_{timestamp}.txt"
-    
-    try:
-        with open(report_file, 'w') as f:
-            f.write(report)
-        print(f"\n📄 Report saved to: {report_file}")
-    except Exception as e:
-        print(f"\n⚠️  Could not save report: {e}")
-    
     # Return appropriate exit code
     if analysis['overall_status'] == 'PASS':
         print("\n🎉 All tests passed! RAG system is ready.")

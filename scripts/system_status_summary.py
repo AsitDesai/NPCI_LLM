@@ -254,17 +254,6 @@ def main():
     report = generate_status_report()
     print(report)
     
-    # Save report
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_file = f"system_status_{timestamp}.txt"
-    
-    try:
-        with open(report_file, 'w') as f:
-            f.write(report)
-        print(f"\n📄 Status report saved to: {report_file}")
-    except Exception as e:
-        print(f"\n⚠️  Could not save report: {e}")
-    
     return 0
 
 if __name__ == "__main__":
