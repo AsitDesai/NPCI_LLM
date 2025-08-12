@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # LLM Configuration (Mistral for generation)
     mistral_api_key: Optional[str] = Field(default="htsiRa57UO5unjCb3vBAHk3HS0oP1s0l", env="MISTRAL_API_KEY")
     mistral_model: str = Field(default="mistral-small-latest", env="MISTRAL_MODEL")
+    
+    # Server Model Endpoint Configuration
+    server_model_endpoint: Optional[str] = Field(default="http://183.82.7.228:9519", env="SERVER_MODEL_ENDPOINT")
+    server_model_name: str = Field(default="NPCI_Greviance", env="SERVER_MODEL_NAME")
     # Fallback OpenAI (optional)
     openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4", env="OPENAI_MODEL")

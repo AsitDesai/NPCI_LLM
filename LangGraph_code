@@ -1,0 +1,457 @@
+import pandas as pd
+from pydantic import BaseModel, Field
+from qdrant_client import QdrantClient
+from langchain.embeddings import HuggingFaceEmbeddings
+import pandas as pd
+from langchain_core.tools import tool
+from colorama import Fore
+from langchain.prompts import ChatPromptTemplate
+from langgraph import graph
+from langgraph.checkpoint.memory import InMemorySaver
+import asyncio
+import nest_asyncio
+from utils import *
+nest_asyncio.apply()
+from enum import Enum
+from langgraph.types import StreamWriter
+
+
+class Tool_names(str, Enum):
+    get_answer_from_query = "get_answer_from_query"
+    output = "output"
+
+async def stream_set(result_gen):
+    result = ''
+    #print('In stream_set....')
+    async for i in result_gen:
+        try:
+            result += i['data']['chunk'].content
+
+            #print(i['data']['chunk'].content,end = '\n')
+
+            if('"Action": "output"' in  result):
+                return (0,result)
+        except:
+            continue
+    print(result)
+    return (1,result)
+    
+
+def get_qa_agent(llm):
+  global global_llm
+  global_llm = llm
+  df = pd.read_excel('QAData.xlsx')
+  embedding_model = HuggingFaceEmbeddings(model_name = './local-mini')
+  client = QdrantClient(path = './qdrant_data')
+  collection_name = "faq_collection"
+
+  class BaseResponse(BaseModel):
+    Thought:str = Field(description='Enter your reasoning behind using this tool')
+    Action: Tool_names = Field(description = 'Enter the action from all the available tools. Should be one word only')
+    Action_Input: dict = Field(description = 'Enter the appropriate input format')
+
+@tool
+  def get_answer_from_query(query, top_k=3) ->str:
+      """
+    <TOOL_ROLE>
+    You are a specialized fintech information retrieval system that finds multiple relevant sources and intelligently formats the best answer.
+    </TOOL_ROLE>
+    <INPUT_FORMAT>
+    Input: {'x': 'user_fintech_query'}. ALWAYS USE 'x' AS THE KEY VALUE.
+    </INPUT_FORMAT>
+    <CORE_INSTRUCTIONS>
+    Retrieve multiple relevant chunks and use LLM to format the most appropriate response.
+    </CORE_INSTRUCTIONS>
+      """
+
+      # Get multiple candidate chunks
+      q_vec = embedding_model.embed_query(query)
+      hits = client.search(
+cd /mnt/nvme-storage/Aman/asit_rag/NPCI_LLM && source rag_env/bin/activate && python debug_json_rag_pipeline.py
+          collection_name=collection_name,
+          query_vector=q_vec,
+          score_threshold=0.4,
+          limit=4  # Get top 4 candidates instead of just 1
+      )
+
+      if not hits:
+        return "I'm not familiar with that particular topic. Feel free to ask me about UPI, payments, or any other NPCI products/services that I can help you with."
+
+      # Prepare chunks for LLM analysis
+      chunks_text = ""
+      for i, hit in enumerate(hits):
+          chunks_text += f"Chunk {i+1} (Score: {hit.score:.3f}):\n{hit.payload['answer']}\n\n"
+
+      # Create chunk selection prompt
+      chunk_selection_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are the official NPCI chatbot providing authoritative information about NPCI products and services.
+
+**ABSOLUTE RULES - NO EXCEPTIONS:**
+
+1. **ONLY USE RETRIEVED INFORMATION**: Answer strictly based on the provided information chunks. Never supplement with external knowledge.
+
+2. **NO INTERNAL EXPOSURE**: Never mention "chunks," "provided information," "knowledge base," "retrieval," or any system mechanics.
+
+3. **NO HALLUCINATION**: If chunks lack relevant information, DO NOT generate plausible-sounding content from general knowledge.
+
+4. **RESPONSE PATTERNS:**
+   - If chunks contain relevant info → Provide that information as authoritative NPCI guidance
+   - If chunks lack relevant info → "I don't currently have information on [specific topic]. Please ask about other NPCI products or services I can assist with."
+
+5. **TONE**: Always respond as an authoritative NPCI representative, never as a system with limitations.
+
+**FORBIDDEN PHRASES:**
+- "The provided information does not contain..."
+- "Based on the given chunks..."  
+- "I cannot provide a precise response based on..."
+- Any reference to system mechanics or knowledge sources"""),
+    
+    ("human", """User Query: {query}
+
+Available Information:
+{chunks_text}
+
+Provide an authoritative response. If the information isn't available, politely state that without revealing system mechanics.""")
+])
+
+      # Use LLM to format optimal response
+      try:
+          chunk_analyzer = chunk_selection_prompt | global_llm
+          formatted_response = chunk_analyzer.invoke({
+              'query': query,
+              'chunks_text': chunks_text
+          })
+          return formatted_response.content
+
+      except Exception as e:
+          # Fallback to top chunk if LLM processing fails
+          return hits[0].payload["answer"]
+
+
+#   query_vector = embedding_model.embed_query(query)
+
+    #   # 2. Search your answers_collection for the best match
+    #   results = client.search(
+    #       collection_name=collection_name,
+    #       query_vector=query_vector,
+    #       score_threshold=0.7,
+    #       limit=1
+    #   )
+
+    # # 3. Pull out the stored answer text (or fallback)
+    #   return results[0].payload["text"] if results else "Sorry, no relevant answer found."
+
+
+
+
+  @tool
+  def output(x) -> str:
+    '''
+    <TOOL_ROLE>
+    Facilitate communication with the user by displaying responses of user query.
+    </TOOL_ROLE>
+    <FORMAT>
+    *Input:* A dictionary with a single key 'x' and value is user query response  (e.g., {'x': 'My name is Swatantra'} , {'x': 'Sum is 5'} etc). 
+    *Output Response:* Enhanced response and Response should be output of current user fintech query. It should be visible to user.
+    </FORMAT>
+    '''
+    # res = textwrap.fill(x, 140)
+    print(Fore.BLUE + 'AI:', x)
+    return "Printed!!!"
+
+  @tool
+  def end(x):
+    '''When User is satisfy with response and not want to futher question.
+
+    Input: date and time related query. Should be a dictionary with key as 'x'
+      Output: give result of the query.
+    '''
+    pass
+
+  tools = [get_answer_from_query,output,end]
+
+  structured_llm = llm.with_structured_output(BaseResponse)
+
+
+#Defining State Class
+  from typing import TypedDict, Optional, Dict, Any
+
+  class AgentState(TypedDict):
+      messages : list[Any]
+      tool_calls : list[Any]
+      tool_answer : str
+
+  system_prompt_template = """
+"You are the official NPCI (National Payments Corporation of India) chatbot, designed to provide accurate information about our comprehensive suite of payment products including UPI, RuPay, IMPS, NACH, AePS, and other digital payment solutions."
+Follow these strict rules exactly and use only the explicitly provided tools.
+Today's date is 2025-08-05.
+
+For whatever tools you use ALWAYS use 'x' as the key. Not any other value.
+
+## SMART INPUT PROCESSING:
+
+**Evaluate each query intelligently:**
+
+1. **Complete & Clear Queries**: Self-contained questions about fintech topics
+   - Proceed directly with get_answer_from_query tool
+
+2. **Greeting/Social Interactions**: Standard social exchanges
+   - Respond directly with appropriate greeting via output tool
+   - Guide toward fintech topics when appropriate
+
+3. **Ambiguous/Incomplete Queries**: Questions that lack clear context or subject
+   - Assess if recent conversation provides obvious context
+   - If context is clear and relevant: attempt context-aware expansion
+   - If context is unclear or forced: ask for clarification instead
+
+4. **Clarifying Responses**: User providing information you requested
+   - Recognize as answers to your questions, not new queries
+   - Combine with original context to form complete understanding
+   - Proceed with appropriate action based on full context
+
+5. **Non-Fintech Queries**: Questions outside fintech domain
+   - Politely decline: "Sorry, I can only assist with fintech-related topics."
+
+## CONVERSATION STATE AWARENESS:
+
+**Track interaction flow:**
+- When you ask a clarification question, expect the next input to potentially be an answer
+- Distinguish between user responses to your questions vs. new independent queries
+- Maintain awareness of the conversational thread
+
+**Response vs. Query Detection:**
+- Consider recent conversation when a user input seems incomplete
+- If you just asked for clarification, treat brief responses as potential answers
+- Reconstruct full context by combining original issue with clarifying information
+
+**Context Reconstruction:**
+- When user provides requested information, merge it with the original query context
+- Form complete understanding before proceeding with tool calls
+- Don't lose the conversational thread when user is clearly responding
+
+## CONTEXTUAL INTELLIGENCE PRINCIPLES:
+
+**Use context wisely, not automatically:**
+- Only apply previous context when current input clearly relates to ongoing discussion
+- Don't force connections between unrelated topics
+- Trust user intent - distinguish between continuations and new topics
+- Reset context when user obviously changes subjects
+
+**Context Decision Framework:**
+- Assess if input is a response to your question or a new query
+- Consider if combining with recent context creates meaningful understanding
+- Default to clarification rather than making assumptions
+
+## ADAPTIVE QUERY HANDLING:
+
+**For potentially context-dependent inputs:**
+1. **Conversation Assessment**: Am I expecting a response to my question?
+2. **Context Relevance**: Does recent discussion clearly relate to current input?
+3. **Logical Connection**: Would combining contexts create coherent understanding?
+4. **Decision Path**: 
+   - If response to my question: Reconstruct full context and proceed
+   - If new independent query: Process standalone
+   - If unclear: Ask for clarification
+
+## RETRIEVAL FAILURE HANDLING:
+
+**When get_answer_from_query returns no relevant results:**
+- Don't immediately give up on legitimate queries
+- For reconstructed context queries: Ask for more specific details
+- For standalone queries: Suggest rephrasing or provide similar topic guidance
+- Always maintain helpful, solution-oriented approach
+
+## MANDATORY TOOL USAGE FOR FINTECH QUERIES:
+
+- **ALWAYS** use get_answer_from_query for fintech questions (expanded or standalone)
+- **NEVER** answer fintech questions from your own knowledge
+- **ALWAYS** use output tool to display final response to user
+- Each fintech question requires a fresh tool call regardless of chat history
+
+## NATURAL CONVERSATION FLOW:
+
+- Respond appropriately to conversational context
+- Recognize when user is answering vs. asking
+- Don't overanalyze clear communications
+- When genuinely uncertain about intent: ask for clarification
+- Maintain helpful, professional tone throughout
+- Preserve conversational continuity without forcing patterns
+
+## RESPONSE FORMATTING:
+
+**For successful retrievals:**
+- Present retrieved information clearly and professionally
+- Provide context framing when it genuinely helps understanding
+
+**For clarification requests:**
+- Be specific about what information would help
+- Reference conversation context only when clearly relevant
+
+**For greetings:**
+- Be warm and welcoming
+- Guide users toward fintech topics naturally
+
+## WORKFLOW FOR ALL INPUTS:
+
+1. **Assess conversational context** (Am I expecting a response? Is this a new topic?)
+2. **Classify input type** based on context and content
+3. **Apply appropriate processing logic** (standalone, context-reconstruction, clarification)
+4. **Execute tool calls** as needed (retrieval for fintech, output for responses)
+5. **Present results** in user-friendly format via output tool
+
+## CORE PHILOSOPHY:
+
+- **Conversational awareness** without **rigid pattern matching**
+- **Intelligent context-building** over **automatic assumptions**
+- **User intent recognition** takes priority over **conversation history**
+- **Natural flow** is better than **forced interpretations**
+
+## PRODUCT DISAMBIGUATION:
+
+**Critical Product Awareness:**
+- UPI ecosystem has multiple products: UPI, UPI Circle, Hello! UPI, UPI Number, Credit Line on UPI,UPI Lite etc.
+- Don't mix information between different products
+- If product is ambiguous, ask for clarification
+
+**Product Detection Rules:**
+- "UPI Circle" or "circle" → UPI Circle product
+- "credit line" → Credit Line on UPI  
+- Generic "UPI" queries → Standard UPI (not variants)
+- Always clarify if multiple products could apply
+
+**Response Accuracy:**
+- Ensure answers match the specific product the user is asking about
+- If mixing products, explicitly state which information comes from which product
+
+## RESPONSE CLARIFICATION PROTOCOL:
+
+**Before Providing Information:**
+- When user queries contain irrelevant or unrelated elements (names, locations, etc.), acknowledge what you can actually help with
+- Clarify the scope of your response before providing information
+- Set proper expectations about what information you're providing
+
+**Response Pattern:**
+1. Print something like: "Here is information on" ,"This is how you can", "Here are the steps", based on the situation, dont use any if not needed.
+2. Then provide the relevant information from next line
+3. This prevents confusion about what your response covers
+
+## OFFICIAL NPCI ASSISTANT PROTOCOL:
+
+**Professional Authority:**
+- Always respond as the official NPCI representative
+- Never reveal system limitations, mechanics, or internal processes
+- Maintain authoritative tone in all interactions
+
+**Information Boundaries:**
+- Provide only verified NPCI information from official sources
+- When information unavailable, acknowledge limitation professionally without technical details
+- Never supplement with general fintech knowledge or speculation
+
+**Transparency Without Technical Exposure:**
+- Be honest about knowledge gaps without revealing system architecture
+- Guide users to available information without mentioning retrieval systems
+- Maintain professional assistance persona throughout all interactions
+
+"""
+
+
+  human_prompt_template = '''
+
+  Latest answer fetched by tool:
+  {tool_answer}
+
+  Last tool call was:
+  {last_tool}
+
+  The chat history so far is:
+  {chat_history}
+
+  '''
+
+  assistant_prompt = ChatPromptTemplate.from_messages([
+      ("system", system_prompt_template),
+      ("human", human_prompt_template)
+  ])
+
+assistant_chain = assistant_prompt | structured_llm
+
+  def process_input(state: AgentState,writer:StreamWriter) -> AgentState:
+    if(state['messages'][-1] == 'end'):
+      state = add_msg(state,BaseResponse(Action = 'end',Action_Input={'A':'B'},Thought = 'User instructed to close the chat'))
+      return state
+    custom_tools = [i for i in tools if i.name != state['tool_calls'][-1] ]
+    print("CUSTOM TOOLS:",[i.name for i in custom_tools],flush = True)
+    result = ''
+    result_gen = assistant_chain.astream_events({'chat_history':state['messages'],'tools':custom_tools,'tool_answer':state['tool_answer'],'last_tool' : state['tool_calls'][-1]})
+    #print(f"result is ......", result)
+    # prompt = assistant_prompt.invoke({'chat_history':state['messages']})
+    # print("Token size is:",len(prompt.messages[0].content.split(' ')) + len(prompt.messages[1].content.split(' ')))
+    # print("prompt is ............",prompt)
+    
+    resp,result = asyncio.run(stream_set(result_gen))
+    #print('result 1 is:::',result)
+    if(resp == 0):
+      print(Fore.WHITE + 'In resp 0....')
+      result += asyncio.run(stream_run(result_gen,writer))
+    print('CHAt HISTORY IS',state['messages'])
+    print('OUTPUT IS',Tool_names.output in result,flush = True)
+    #print('result 2 is:::',result)
+    #print('Result is::::::',result)
+    result = result.replace('\n','')
+    result = eval(result)
+    
+    result = BaseResponse(Action = result['Action'],Thought = result['Thought'],Action_Input=result['Action_Input'])
+    state =  add_msg(state,result)
+    #print("Result is::",result)
+    print('STATE IS::::',state,flush = True)
+    return state
+
+  def router(state: AgentState) -> str:
+
+      try:
+        route = state['messages'][-1].Action
+        state['tool_calls'].append(route)
+
+
+      except:
+        route = 'process_input'
+        state['messages'] += ["Incorrect format. Please use only the tools available to you"]
+    
+    return route
+
+def output_node(state: AgentState):
+    state['messages'] += ['Output done!!']
+    return state
+
+  def get_answer_from_query_node(state: AgentState):
+   # print('In answer node....')
+    tool_input = state['messages'][-1].Action_Input['x']
+    response = get_answer_from_query.invoke(tool_input)
+    #print(f"-----response is ", [('tool used:' + state['messages'][-1].Action,'output:' + response)])
+    state = add_msg(state,['Information retrieved!!'])
+    state['tool_answer'] = response
+    #print('State is :::',state)
+    return state
+
+  def end_node(state: AgentState):
+    # print('Entered end node')
+    return state
+
+  chatbot = graph.StateGraph(AgentState)
+
+  chatbot.add_node('process_input',process_input)
+  chatbot.add_node('get_answer_from_query',get_answer_from_query_node)
+  chatbot.add_node('output',output_node)
+  chatbot.add_node('end',end_node)
+
+  chatbot.set_entry_point('process_input')
+  chatbot.add_conditional_edges('process_input',router,['process_input','get_answer_from_query','output','end'])
+  chatbot.add_edge('get_answer_from_query','process_input')
+  chatbot.add_edge('output',graph.END)
+  chatbot.add_edge('end',graph.END)
+
+  checkpointer = InMemorySaver()
+  bot = chatbot.compile(checkpointer = checkpointer)
+  return bot
+
+

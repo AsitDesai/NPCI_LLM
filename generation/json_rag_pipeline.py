@@ -59,24 +59,34 @@ class JSONRAGPipeline:
         logger.info(f"Mistral model: {self.mistral_model}")
     
     def _init_mistral_client(self):
-        """Initialize Mistral client."""
+        """Initialize Mistral client and server endpoint."""
         try:
             from mistralai import Mistral, UserMessage, AssistantMessage
+            import requests
             
-            if not settings.mistral_api_key:
-                raise ValueError("Mistral API key not configured")
+            # Initialize server endpoint
+            self.server_endpoint = settings.server_model_endpoint
+            self.server_model_name = settings.server_model_name
             
-            self.mistral_client = Mistral(api_key=settings.mistral_api_key)
-            self.UserMessage = UserMessage
-            self.AssistantMessage = AssistantMessage
+            if self.server_endpoint:
+                logger.info(f"Server model endpoint configured: {self.server_endpoint}")
+                logger.info(f"Server model name: {self.server_model_name}")
             
-            logger.info("Mistral client initialized successfully")
+            # Initialize Mistral client as fallback
+            if settings.mistral_api_key:
+                self.mistral_client = Mistral(api_key=settings.mistral_api_key)
+                self.UserMessage = UserMessage
+                self.AssistantMessage = AssistantMessage
+                logger.info("Mistral client initialized successfully")
+            else:
+                logger.warning("Mistral API key not configured - will use server endpoint only")
+                self.mistral_client = None
             
         except ImportError:
             logger.error("mistralai package not installed. Please install it with: pip install mistralai")
             raise
         except Exception as e:
-            logger.error(f"Error initializing Mistral client: {e}")
+            logger.error(f"Error initializing clients: {e}")
             raise
     
     def _build_context_from_retrieved_docs(self, 
@@ -136,7 +146,55 @@ Answer:"""
     
     def _generate_answer_with_mistral(self, prompt: str) -> str:
         """
-        Generate answer using Mistral 24B.
+        Generate answer using server endpoint first, fallback to Mistral AI.
+        
+        Args:
+            prompt: Formatted prompt
+            
+        Returns:
+            Generated answer
+        """
+        # Try server endpoint first
+        if self.server_endpoint:
+            try:
+                answer = self._generate_answer_with_server_endpoint(prompt)
+                if answer and not answer.startswith("Error"):
+                    logger.info("Generated answer using server endpoint")
+                    return answer
+                else:
+                    logger.warning("Server endpoint failed, trying Mistral API")
+            except Exception as e:
+                logger.warning(f"Server endpoint error: {e}, trying Mistral API")
+        
+        # Fallback to Mistral API
+        if self.mistral_client:
+            try:
+                # Create chat message
+                messages = [
+                    self.UserMessage(content=prompt)
+                ]
+                
+                # Generate response
+                response = self.mistral_client.chat.complete(
+                    model=self.mistral_model,
+                    messages=messages,
+                    max_tokens=1000,
+                    temperature=0.1  # Low temperature for more focused responses
+                )
+                
+                answer = response.choices[0].message.content
+                logger.info("Generated answer using Mistral API")
+                return answer.strip()
+                
+            except Exception as e:
+                logger.error(f"Error generating answer with Mistral: {e}")
+                return f"Error generating answer: {str(e)}"
+        else:
+            return "Error: No available generation service configured"
+    
+    def _generate_answer_with_server_endpoint(self, prompt: str) -> str:
+        """
+        Generate answer using the server model endpoint.
         
         Args:
             prompt: Formatted prompt
@@ -145,25 +203,40 @@ Answer:"""
             Generated answer
         """
         try:
-            # Create chat message
-            messages = [
-                self.UserMessage(content=prompt)
-            ]
+            import requests
+            import json
             
-            # Generate response
-            response = self.mistral_client.chat.complete(
-                model=self.mistral_model,
-                messages=messages,
-                max_tokens=1000,
-                temperature=0.1  # Low temperature for more focused responses
+            # Prepare request payload
+            payload = {
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+                "model": self.server_model_name,
+                "max_tokens": 1000,
+                "temperature": 0.1
+            }
+            
+            # Make request to server endpoint
+            response = requests.post(
+                f"{self.server_endpoint}/chat/completions",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30
             )
             
-            answer = response.choices[0].message.content
-            return answer.strip()
-            
+            if response.status_code == 200:
+                result = response.json()
+                if "choices" in result and len(result["choices"]) > 0:
+                    answer = result["choices"][0]["message"]["content"]
+                    return answer.strip()
+                else:
+                    raise ValueError("Invalid response format from server endpoint")
+            else:
+                raise Exception(f"Server endpoint returned status {response.status_code}: {response.text}")
+                
         except Exception as e:
-            logger.error(f"Error generating answer with Mistral: {e}")
-            return f"Error generating answer: {str(e)}"
+            logger.error(f"Error generating answer with server endpoint: {e}")
+            raise
     
     def answer_query(self, 
                     query: str,
@@ -224,6 +297,9 @@ Answer:"""
             
             logger.info(f"Generated answer in {total_time:.3f}s (retrieval: {retrieval_time:.3f}s, generation: {generation_time:.3f}s)")
             
+            # Determine which model was used
+            model_used = self.server_model_name if self.server_endpoint else self.mistral_model
+            
             return RAGResponse(
                 answer=answer,
                 query=query,
@@ -231,7 +307,7 @@ Answer:"""
                 generation_time=generation_time,
                 retrieval_time=retrieval_time,
                 total_time=total_time,
-                model_used=self.mistral_model
+                model_used=model_used
             )
             
         except Exception as e:
