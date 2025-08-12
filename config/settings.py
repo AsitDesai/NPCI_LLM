@@ -21,22 +21,22 @@ class Settings(BaseSettings):
     debug: bool = Field(default=True, env="DEBUG")
     
     # LLM Configuration (Mistral for generation)
-    mistral_api_key: Optional[str] = Field(default=None, env="MISTRAL_API_KEY")
+    mistral_api_key: Optional[str] = Field(default="htsiRa57UO5unjCb3vBAHk3HS0oP1s0l", env="MISTRAL_API_KEY")
     mistral_model: str = Field(default="mistral-small-latest", env="MISTRAL_MODEL")
     # Fallback OpenAI (optional)
     openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4", env="OPENAI_MODEL")
     
-    # Embedding Configuration (LlamaIndex HuggingFace integration)
+    # Embedding Configuration (sentence-transformers/all-MiniLM-L6-v2)
     embedding_model_name: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", env="EMBEDDING_MODEL_NAME")
     embedding_model_dimension: int = Field(default=384, env="EMBEDDING_MODEL_DIMENSION")
     embedding_batch_size: int = Field(default=32, env="EMBEDDING_BATCH_SIZE")
     
     # Qdrant Database Settings
-    qdrant_host: str = Field(default="localhost", env="QDRANT_HOST")
+    qdrant_host: str = Field(default="0.0.0.0", env="QDRANT_HOST")
     qdrant_port: int = Field(default=6333, env="QDRANT_PORT")
-    qdrant_api_key: Optional[str] = Field(default=None, env="QDRANT_API_KEY")
-    vector_db_name: str = Field(default="rag_embeddings", env="VECTOR_DB_NAME")
+    qdrant_api_key: Optional[str] = Field(default="dhsuhdujhisduygh", env="QDRANT_API_KEY")
+    vector_db_name: str = Field(default="answers_collection", env="VECTOR_DB_NAME")
     vector_db_dimension: int = Field(default=384, env="VECTOR_DB_DIMENSION")
     vector_db_metric: str = Field(default="cosine", env="VECTOR_DB_METRIC")
     
