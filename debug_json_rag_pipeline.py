@@ -549,30 +549,61 @@ class JSONRAGDebugger:
                     self.print_error(f"✗ Failed to create test collection: {e}")
                     return False
             
-            # Test vector upload
-            test_texts = ["Test sentence 1", "Test sentence 2"]
-            try:
-                test_embeddings = model.encode(test_texts, convert_to_list=True, batch_size=1)
-                # Ensure embeddings are proper float lists for Qdrant
-                test_embeddings = self._ensure_float_embeddings(test_embeddings)
-            except Exception as e:
-                if "out of memory" in str(e).lower():
-                    # Force CPU mode if still out of memory
-                    model = SentenceTransformer(settings.embedding_model_name, device='cpu')
+            # Test vector upload with real data
+            from scripts.json_data_ingestion import JSONDataIngestion
+            
+            # Get real data for testing
+            ingestion = JSONDataIngestion(max_tokens_per_chunk=200)
+            results = ingestion.process_json_files()
+            
+            if results["success"] and results["chunks"]:
+                # Use first 2 chunks from real data
+                real_chunks = results["chunks"][:2]
+                test_texts = [chunk.text for chunk in real_chunks]
+                
+                try:
                     test_embeddings = model.encode(test_texts, convert_to_list=True, batch_size=1)
                     # Ensure embeddings are proper float lists for Qdrant
                     test_embeddings = self._ensure_float_embeddings(test_embeddings)
-                else:
-                    raise e
-            
-            points = []
-            for i, (text, embedding) in enumerate(zip(test_texts, test_embeddings)):
-                point = PointStruct(
-                    id=i,  # Use integer ID instead of string
-                    vector=embedding,
-                    payload={"text": text, "index": i}
-                )
-                points.append(point)
+                except Exception as e:
+                    if "out of memory" in str(e).lower():
+                        # Force CPU mode if still out of memory
+                        model = SentenceTransformer(settings.embedding_model_name, device='cpu')
+                        test_embeddings = model.encode(test_texts, convert_to_list=True, batch_size=1)
+                        # Ensure embeddings are proper float lists for Qdrant
+                        test_embeddings = self._ensure_float_embeddings(test_embeddings)
+                    else:
+                        raise e
+                
+                points = []
+                for i, (chunk, embedding) in enumerate(zip(real_chunks, test_embeddings)):
+                    point = PointStruct(
+                        id=i,
+                        vector=embedding,
+                        payload=chunk.payload  # Use real payload with real categories/types
+                    )
+                    points.append(point)
+                
+                self.print_info(f"ℹ️ Using real data: {len(real_chunks)} chunks")
+            else:
+                # Fallback to test data if real data fails
+                test_texts = ["Test sentence 1", "Test sentence 2"]
+                test_embeddings = model.encode(test_texts, convert_to_list=True, batch_size=1)
+                test_embeddings = self._ensure_float_embeddings(test_embeddings)
+                
+                points = []
+                for i, (text, embedding) in enumerate(zip(test_texts, test_embeddings)):
+                    point = PointStruct(
+                        id=i,
+                        vector=embedding,
+                        payload={
+                            "text": text, 
+                            "index": i,
+                            "category": "test_category",
+                            "type": "test_type"
+                        }
+                    )
+                    points.append(point)
             
             client.upsert(
                 collection_name=test_collection,
@@ -665,7 +696,8 @@ class JSONRAGDebugger:
             
             # Test retrieval (only if we have data)
             if collection_info.get('points_count', 0) > 0:
-                test_query = "insufficient balance"
+                # Use a query that should match the real UPI decline data
+                test_query = "balance insufficient funds"
                 results = retriever.retrieve(test_query, top_k=3)
                 
                 if results:
